@@ -1,26 +1,15 @@
 // Pet Care Journal System
 const express = require('express');
-const mysql = require('mysql2');
-const multer = require('multer');
 const session = require('express-session');
 const flash = require('connect-flash');
-const crypto = require('crypto');
+const connection = require('./config/db');
+const upload = require('./config/upload');
+const { isLoggedIn, isAdmin } = require('./middleware/auth');
+const sha256Hash = require('./helpers/hash');
 const app = express();
 const PORT = 3000;
 
 app.use(flash());
-
-// Set up multer for file uploads
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, 'public/images'); // Directory to save uploaded files
-    },
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + '_' + file.originalname); 
-    }
-});
-
-const upload = multer({ storage: storage });
 
 // View Engine and Middleware
 app.set('view engine', 'ejs');
@@ -32,29 +21,6 @@ app.use(session({
   resave: false,
   saveUninitialized: true
 }));
-
-// MySQL Connection
-const connection = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: 'RP738964$',
-  database: 'petcare'
-});
-
-function sha256Hash(value) {
-  return crypto.createHash('sha256').update(value).digest('hex');
-}
-
-// Auth Middleware
-function isLoggedIn(req, res, next) {
-  if (req.session.user) return next();
-  res.redirect('/login');
-}
-
-function isAdmin(req, res, next) {
-  if (req.session.user && req.session.user.role === 'admin') return next();
-  res.send('Access Denied!');
-}
 
 // =========================
 // Authentication Routes
